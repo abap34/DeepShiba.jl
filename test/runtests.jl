@@ -1,6 +1,5 @@
-using DeepShiba
 using Test
 
-@testset "DeepShiba.jl" begin
-    # Write your own tests here.
+@testset "TravisTest" begin
+    1 + 1 == 2
 end
