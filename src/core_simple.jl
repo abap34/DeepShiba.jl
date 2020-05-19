@@ -12,8 +12,6 @@ mutable struct Func
 end
 
 
-const nothing_var = Variable(nothing,nothing,nothing)
-
 function (f::Func)(x::Variable)
     f.input = x 
     y = f.forward(x.data)
@@ -33,9 +31,3 @@ function backward!(var::Variable)
     end
 end
 
-square_forward(x) = x ^ 2
-square_backward(x) = 2 * x
-
-
-exp_forward(x) = exp(x)
-exp_backward(x) = exp(x)
