@@ -1,5 +1,5 @@
 module DeepShiba
-
-greet() = print("Hello World!")
-
-end # module
+    include("core_simple.jl")
+    include("utils.jl")
+    export  Variable,Func,f,backward!
+end 
