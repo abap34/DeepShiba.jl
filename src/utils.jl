@@ -19,3 +19,7 @@ function Base.print(x::Func)
     println("]")
 end
 
+
+function numerical_diff(f::Function, x::Real, e=10e-4)
+    return (f(x + e) - f(x - e)) / 2e
+end
