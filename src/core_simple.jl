@@ -23,11 +23,12 @@ end
 
 
 function backward!(var::Variable)
-    f = var.creator
-    if !(isnothing(f))
-        x = f.input
-        x.grad = f.backward(f.input.data) * var.grad
-        backward!(x)
+    funcs = [var.creator]
+    while !(isempty(funcs))
+        f = pop!(funcs)
+        x, y = f.input, f.output
+        x.grad = f.backward(x.data) * y.grad
+        (!(isnothing(x.creator))) && (push!(funcs, x.creator))
     end
 end
 
