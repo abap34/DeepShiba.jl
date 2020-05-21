@@ -10,12 +10,12 @@ function Base.print(x::Variable,debug=false)
     println(")")
 end
 
-function Base.print(x::Func)
+function Base.print(f::Func)
     println("Func[")
     print("input: ")
-    println(x.input)
+    println(f.input)
     print("output: ")
-    println(x.output)
+    println(f.output)
     println("]")
 end
 

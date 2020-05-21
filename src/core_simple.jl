@@ -12,9 +12,9 @@ mutable struct Func
 end
 
 
-function (f::Func)(x::Variable)
-    f.input = x 
-    y = f.forward(x.data)
+function (f::Func)(var::Variable)
+    f.input = var 
+    y = f.forward(var.data)
     output = Variable(y, f, nothing)
     f.output = output
     return  output
