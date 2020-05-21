@@ -15,8 +15,8 @@ end
 @testset "DiffTest" begin
     x = Variable(0.5, nothing, nothing)
     f = Func(
-        x->x^2,
-        x->2x,
+        x -> x^2,
+        x -> 2x,
         nothing,
         nothing
     )
