@@ -1,11 +1,14 @@
 include("core_simple.jl")
-function Base.print(x::Variable,debug=false)
-    print("Variable(")
+
+function Base.print(x::Variable, debug=true)
+    println("Variable(")
     print("data:",x.data)
     if debug
         println()
         (x.grad !== nothing) && println("grad:",x.grad)
-        (x.creator !== nothing) && println("creator:",x.creator.name)
+        if (x.creator !== nothing)
+            (x.creator.name !== nothing) && (println("creator:",x.creator.name))
+        end
     end
     println(")")
 end
@@ -13,9 +16,9 @@ end
 function Base.print(f::Func)
     println("Func[")
     print("input: ")
-    println(f.input)
+    println(f.inputs)
     print("output: ")
-    println(f.output)
+    println(f.outputs)
     println("]")
 end
 

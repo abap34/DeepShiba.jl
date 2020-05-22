@@ -1,41 +1,23 @@
-include("../src/core_simple.jl")
-square_forward(x) = x^2
-square_backward(x) = 2 * x
+using DeepShiba
 
 
-exp_forward(x) = exp(x)
-exp_backward(x) = exp(x)
+Square(x) = func(
+    x -> x^2,
+    x -> 2x
+)(x)
 
-a = Square = Func(
-    square_forward,
-    square_backward, 
-    nothing,
-    nothing
-)
-b = Func(
-    exp_forward,
-    exp_backward,
-    nothing,
-    nothing
-)
-c = Func(
-    square_forward,
-    square_backward, 
-    nothing,
-    nothing
-)
+Exp(x) = func(
+    x -> exp(x),
+    x -> exp(x),
+)(x)
+
+Add(x1, x2) = func(
+    (x1, x2) -> x1 + x2,
+    x -> 1,
+)(x1, x2)
 
 
-x = Variable(
-    0.5,
-    nothing,
-    nothing
-)
-
-
-A = a(x)
-B = b(A)
-C = c(B)
-C.grad = 1
-backward!(C)
-println(x.grad)
+x1 = variable(0.5)
+x2 = variable(1.5)
+y = Add(Square(x1), Exp(x2))
+backward!(y)

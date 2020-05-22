@@ -13,15 +13,42 @@ const e = 10e-5
 end
 
 @testset "DiffTest" begin
-    x = Variable(0.5, nothing, nothing)
-    f = Func(
+    x = variable(0.5)
+    f(x) = Func(
         x -> x^2,
         x -> 2x,
         nothing,
-        nothing
-    )
+        nothing,
+        0,
+        "f"
+    )(x)
     y = f(x)
     y.grad = 1
     backward!(y)
     @test 1.0 - e <= x.grad <= 1.0 + e
+    Square(x) = func(
+        x -> x^2,
+        x -> 2x
+    )(x)
+
+    Exp(x) = func(
+        x -> exp(x),
+        x -> exp(x),
+    )(x)
+
+    Add(x1, x2) = func(
+        (x1, x2) -> x1 + x2,
+        x -> 1,
+    )(x1, x2)
+
+
+    x1 = variable(0.5)
+    x2 = variable(1.5)
+    y = Add(Square(x1), Exp(x2))
+    backward!(y)
+    @test ((0.5^2) + exp(1.5) - e) <= y.data <= ((0.5^2) + exp(1.5) + e)
+end
+
+@testset "ExampleFileTest" begin
+    @test include("../example/simple_backpropagation.jl") == nothing
 end
