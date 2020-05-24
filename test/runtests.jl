@@ -49,6 +49,3 @@ end
     @test ((0.5^2) + exp(1.5) - e) <= y.data <= ((0.5^2) + exp(1.5) + e)
 end
 
-@testset "ExampleFileTest" begin
-    @test include("../example/simple_backpropagation.jl") == nothing
-end
