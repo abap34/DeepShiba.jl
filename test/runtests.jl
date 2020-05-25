@@ -13,10 +13,11 @@ const e = 10e-5
 end
 
 @testset "DiffTest" begin
+    # ===================
     x = variable(0.5)
     f(x) = Func(
-        x -> x^2,
-        x -> 2x,
+        x->x^2,
+        x->2x,
         nothing,
         nothing,
         0,
@@ -26,19 +27,23 @@ end
     y.grad = 1
     backward!(y)
     @test 1.0 - e <= x.grad <= 1.0 + e
+    # ===================
+    
+    
+    # ===================
     Square(x) = func(
-        x -> x^2,
-        x -> 2x
+        x->x^2,
+        x->2x
     )(x)
 
     Exp(x) = func(
-        x -> exp(x),
-        x -> exp(x),
+        x->exp(x),
+        x->exp(x),
     )(x)
 
     Add(x1, x2) = func(
-        (x1, x2) -> x1 + x2,
-        x -> 1,
+        (x1, x2)->x1 + x2,
+        (x1, x2)->(1, 1)
     )(x1, x2)
 
 
@@ -47,5 +52,28 @@ end
     y = Add(Square(x1), Exp(x2))
     backward!(y)
     @test ((0.5^2) + exp(1.5) - e) <= y.data <= ((0.5^2) + exp(1.5) + e)
-end
+    # ===================
 
+    # ===================
+    x = variable(2.0)
+
+    Square(x) = func(
+        x->x^2,
+        x->2x,
+        "Square"
+    )(x)
+
+
+    Add(x1, x2) = func(
+    (x1, x2)->x1 + x2,
+    (x1, x2)->(1, 1),
+    "Add"
+    )(x1, x2)
+
+    a = Square(x)
+    y = Add(Square(a), Square(a))
+    backward!(y)
+    @test 32.0 - e <= y.data <= 32.0 + e
+    @test 64.0 - e <= x.grad <= 64.0 + e 
+    # =====================
+end
