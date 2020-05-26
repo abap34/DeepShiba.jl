@@ -7,7 +7,7 @@ function Base.print(x::Variable, debug=true)
         println()
         (x.grad !== nothing) && println("grad:",x.grad)
         if (x.creator !== nothing)
-            (x.creator.name !== nothing) && (println("creator:",x.creator.name))
+            (x.creator.name !== nothing) && (println("creator:", x.creator.name))
         end
     end
     println(")")
