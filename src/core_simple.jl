@@ -1,10 +1,9 @@
 import Base
 using DataStructures
 
+abstract type ShibaObject end
 
-
-
-mutable struct Variable
+mutable struct Variable <: ShibaObject 
     data
     creator
     grad
@@ -12,7 +11,7 @@ mutable struct Variable
     name
 end
 
-mutable struct Func
+mutable struct Func <: ShibaObject
     forward
     backward
     inputs
@@ -37,6 +36,9 @@ function as_tuple(x)
     typeof(x) <: Tuple ? x : tuple(x)
 end
 
+function as_variable(x)
+    typeof(x) == Variable ? x : variable(x)
+end
 
 get_data(var::Variable) = var.data
 
@@ -53,9 +55,9 @@ function (f::Func)(vars::Variable...)
     ys = as_tuple(ys)
     f.generation = maximum([x.generation for x in f.inputs])
     outputs = [Variable(y, f, nothing, f.generation - 1, nothing) for y in ys]  
-    # Why is the generation decimating?
-        #= At the time of backpropagation, we use a priority queue to take out the smallest number of generations in order.
-        So, the closer you are to the output layer, the smaller the generation needs to be.. =#
+    #= Why is the generation decimating?
+        When using the Priority queue, the values are taken in order of decreasing priority.
+        The larger the number of generations, the more we want to process it first, so the value is decremented.=#
     f.outputs = outputs
     length(outputs)  == 1 ? outputs[1] : outputs
 end
@@ -89,26 +91,54 @@ end
 
 
 Add(x1, x2) = func(
-    (x1, x2)->x1 + x2,
-    (x1, x2)->1, 1
+    (x1, x2) -> x1 + x2,
+    (x1, x2) -> (1, 1)
 )(x1, x2)
 
 Sub(x1, x2) = func(
-    (x1, x2)->x1 - x2,
-    x->(1, -1)
+    (x1, x2) -> x1 - x2,
+    x -> (1, -1)
 )(x1, x2)
 
 Neg(x) = func(
-    x->-x,
-    x->-x
-)
+    x -> -x,
+    x -> -x
+)(x)
 
 Mul(x1, x2) = func(
-    (x1, x2)->x1 * x2,
-    x->(x, x)
-)
+    (x1, x2) -> x1 * x2,
+    x -> (x, x)
+)(x1, x2)
 
 Div(x1, x2) = func(
-    (x1, x2)->x1 / x2,
-    nothing
-)
+    (x1, x2) -> x1 / x2,
+    (x1, x2) -> (1 / x1, -x1 / (x2 ^ 2))
+)(x1, x2)
+
+Pow(x1, x2) = func(
+    (x1, x2) -> x1 ^ x2,
+    (x1, x2) -> x2 * x1 ^  (x2 - 1)
+)(x1, x2)
+
+Base.:+(x1::Variable, x2::Variable) = Add(x1, x2)
+Base.:+(x1::Variable, x2) = Add(x1, variable(x2))
+Base.:+(x1, x2::Variable) = Add(variable(x1), x2)
+
+
+Base.:-(x1::Variable, x2::Variable) = Sub(x1, x2)
+Base.:-(x1::Variable, x2) = Sub(x1, variable(x2))
+Base.:-(x1, x2::Variable) = Sub(variable(x1), x2)
+
+Base.:*(x1::Variable, x2::Variable) = Mul(x1, x2)
+Base.:*(x1::Variable, x2) = Mul(x1, variable(x2))
+Base.:*(x1, x2::Variable) = Mul(variable(x1), x2)
+
+Base.:/(x1::Variable, x2::Variable) = Div(x1, x2)
+Base.:/(x1::Variable, x2) = Div(x1, variable(x2))
+Base.:/(x1, x2::Variable) = Div(variable(x1), x2)
+
+Base.:-(x::Variable) = Neg(x)
+
+Base.:^(x1::Variable, x2::Variable) = Pow(x1, x2)
+Base.:^(x1::Variable, x2) = Pow(x1, variable(x2))
+Base.:^(x1, x2::Variable) = Pow(variable(x1), x2)
