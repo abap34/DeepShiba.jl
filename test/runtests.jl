@@ -1,6 +1,6 @@
 using Test
 using DeepShiba
-using Random
+
 
 
 function isAbout(x, y, e=10e-5)
