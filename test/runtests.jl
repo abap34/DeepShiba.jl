@@ -4,7 +4,7 @@ using DeepShiba
 
 
 function isAbout(x, y, e=10e-5)
-    return x - e <= x <= x + e
+    return y - e <= x <= y + e
 end
 
 @testset "NumericalDiffTest" begin
@@ -79,7 +79,7 @@ end
     y = Add(Square(a), Square(a))
     backward!(y)
     @test isAbout(y.data, 32)
-    @test isAbout(x.grad, 54)
+    @test isAbout(x.grad, 64)
     # =====================
 
     # =====================
