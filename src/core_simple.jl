@@ -21,9 +21,10 @@ mutable struct Func <: ShibaObject
 end
 
 
-variable(data, name = nothing) = Variable(data, nothing, nothing, 0, name)
 
-func(forward, backward, name = nothing) = Func(forward, backward, nothing, nothing, 0, name)
+variable(data, name=nothing) = Variable(data, nothing, nothing, 0, name)
+
+func(forward, backward, name=nothing) = Func(forward, backward, nothing, nothing, 0, name)
 
 
 function ones_like(x)
@@ -67,7 +68,7 @@ function backward!(var::Variable, debug = false)
     (isnothing(var.grad)) && (var.grad = ones_like(var.data))
     funcs = PriorityQueue{Func,Int}()
     seen_set = Set{Func}()
-    funcs[var.creator] = 1
+    enqueue!(funcs, var.creator, 1)
     push!(seen_set, var.creator)
     while !(isempty(funcs))
         f = dequeue!(funcs)
@@ -76,12 +77,12 @@ function backward!(var::Variable, debug = false)
         gxs =  f.backward(inputs...) .* gys
         gxs = tuple(gxs...)
         for (x, gx) in zip(f.inputs, gxs)
-            if isnothing(x.grad) 
+            if x.grad === nothing
                 x.grad = gx
             else
                 x.grad = x.grad + gx
             end
-            if (!(isnothing(x.creator))) && (!(x.creator in seen_set))
+            if x.creator !== nothing && (!(x.creator in seen_set))
                 push!(seen_set, x.creator)
                 enqueue!(funcs, x.creator, x.creator.generation)
             end
@@ -92,32 +93,38 @@ end
 
 Add(x1, x2) = func(
     (x1, x2) -> x1 + x2,
-    (x1, x2) -> (1, 1)
+    (x1, x2) -> (1, 1),
+    "Add"
 )(x1, x2)
 
 Sub(x1, x2) = func(
     (x1, x2) -> x1 - x2,
-    x -> (1, -1)
+    (x1, x2) -> (1, -1),
+    "Sub"
 )(x1, x2)
 
 Neg(x) = func(
     x -> -x,
-    x -> -x
+    x -> -x,
+    "Neg"
 )(x)
 
 Mul(x1, x2) = func(
     (x1, x2) -> x1 * x2,
-    x -> (x, x)
+    (x1, x2) -> (x1, x2),
+    "Mul"
 )(x1, x2)
 
 Div(x1, x2) = func(
     (x1, x2) -> x1 / x2,
-    (x1, x2) -> (1 / x1, -x1 / (x2 ^ 2))
+    (x1, x2) -> (1 / x1, -x1 / (x2 ^ 2)),
+    "Div"
 )(x1, x2)
 
 Pow(x1, x2) = func(
     (x1, x2) -> x1 ^ x2,
-    (x1, x2) -> x2 * x1 ^  (x2 - 1)
+    (x1, x2) -> x2 * x1 ^  (x2 - 1),
+    "Pow"
 )(x1, x2)
 
 Base.:+(x1::Variable, x2::Variable) = Add(x1, x2)
