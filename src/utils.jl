@@ -1,30 +1,73 @@
-include("core_simple.jl")
+include("core.jl")
 
-function Base.print(x::Variable, debug = true)
-    if x.name !== nothing
-        println(x.name, "(")
+
+function get_output_str(var::Variable)
+    output = "{DeepShiba.ShibaObject.Variable}\n"
+
+    if var.name !== nothing
+        output *= "$(var.name):\n"
     else
-        println("(")
+        output *= "\n"
     end
-    print("data:", x.data)
-    if debug
-        println()
-        (x.grad !== nothing) && println("grad:", x.grad)
-        if (x.creator !== nothing)
-            (x.creator.name !== nothing) && (println("creator:", x.creator.name))
+    output *= "data: $(var.data)\n"
+
+    if (var.grad !== nothing) 
+        output *= "grad: $(var.grad)\n"
+    end
+
+    if (var.creator !== nothing)
+        if (var.creator.name !== nothing) 
+            output *= "creator: $(var.creator.name)\n"
         end
+    else
+        output *= "User-Defined\n"
     end
-    println(")")
+    return output
 end
+
+function Base.print(var::Variable)
+    println(get_output_str(var))
+end
+
+function Base.println(var::Variable)
+    println(get_output_str(var))
+end
+
+function Base.display(var::Variable)
+    println(get_output_str(var))
+end
+
+
+
 
 function Base.print(f::Func)
     println("Func[")
     print("input: ")
-    println(f.inputs)
+    print(f.inputs)
     print("output: ")
-    println(f.outputs)
-    println("]")
+    print(f.outputs)
+    print("]")
 end
+
+function Base.println(f::Func)
+    println("Func[")
+    print("input: ")
+    print(f.inputs)
+    print("output: ")
+    print(f.outputs)
+    print("]")
+end
+
+function Base.display(f::Func)
+    println("Func[")
+    print("input: ")
+    print(f.inputs)
+    print("output: ")
+    print(f.outputs)
+    print("]")
+end
+
+
 
 
 function numerical_diff(f::Function, x::Real, e = 10e-4)
@@ -33,15 +76,16 @@ end
 
 
 function _dot_var(var::Variable)
-    name = var.name === nothing ? "" : var.name
+    name = var.name === nothing ? "" : var.name * ":"
     if var.data !== nothing
-        var_size = isempty(size(var.data)) ? "scalar" : size(var.data)
-        if var_size == "scalar"
-            name *= ": $(var.data)"
+        var_size = size(var.data)
+        if isempty(var_size)
+            name *= "$(var.data)"
+        else    
+            name *= "$(var_size) $(eltype(var.data))"
         end
-        name *= ": $(var_size) $(eltype(var.data))"
     end
-    dot_var = "$(objectid(var)) [label=\"($name)\", color=orange, style=filled]\n"
+    dot_var = "$(objectid(var)) [label=\"$name\", color=orange, style=filled]\n"
 end
 
 
@@ -58,18 +102,18 @@ end
 
 function get_dot_graph(var)
     txt = ""
-    funcs = PriorityQueue{Func,Int}()
+    funcs = []
     seen_set = Set{Func}()
-    enqueue!(funcs, var.creator, 1)
+    push!(funcs, var.creator)
     txt = _dot_var(var)
     while !(isempty(funcs))
-        f = dequeue!(funcs)
+        f = pop!(funcs)
         txt *= _dot_func(f)
         for x in f.inputs
             txt *= _dot_var(x)
             if x.creator !== nothing && (!(x.creator in seen_set))
                 push!(seen_set, x.creator)
-                enqueue!(funcs, x.creator, x.creator.generation)
+                push!(funcs, x.creator)
             end
         end
     end
@@ -80,7 +124,7 @@ end
 
 
 
-function plot(var::Variable,to_file = "graph.png")
+function plot(var::Variable, to_file = "graph.png")
     dot_graph = get_dot_graph(var)
     tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
     (!(ispath(tmp_dir))) && (mkdir(tmp_dir))
@@ -95,7 +139,3 @@ function plot(var::Variable,to_file = "graph.png")
 end
 
 
-function mkdir_hoge(s)
-    s = "mkdir $s"
-    run(`$(split(s))`, wait=false)
-end

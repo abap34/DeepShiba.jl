@@ -24,7 +24,7 @@ end
 
 variable(data, name=nothing) = Variable(data, nothing, nothing, 0, name)
 
-func(forward, backward, name=nothing) = Func(forward, backward, nothing, nothing, 0, name)
+func(forward, backward, name=nothing) = Func(forward, backward, nothing, nothing, nothing, name)
 
 
 function ones_like(x)
@@ -54,7 +54,7 @@ function (f::Func)(vars::Variable...)
     xs = [x.data for x in vars]
     ys = f.forward(xs...)
     ys = as_tuple(ys)
-    f.generation = maximum([x.generation for x in f.inputs])
+    f.generation = minimum([x.generation for x in f.inputs])
     outputs = [Variable(y, f, nothing, f.generation - 1, nothing) for y in ys]  
     #= Why is the generation decimating?
         When using the Priority queue, the values are taken in order of decreasing priority.
@@ -64,7 +64,7 @@ function (f::Func)(vars::Variable...)
 end
 
 
-function backward!(var::Variable, debug = false)
+function backward!(var::Variable)
     (isnothing(var.grad)) && (var.grad = ones_like(var.data))
     funcs = PriorityQueue{Func,Int}()
     seen_set = Set{Func}()
@@ -111,7 +111,7 @@ Neg(x) = func(
 
 Mul(x1, x2) = func(
     (x1, x2) -> x1 * x2,
-    (x1, x2) -> (x1, x2),
+    (x1, x2) -> (x2, x1),
     "Mul"
 )(x1, x2)
 
@@ -123,9 +123,11 @@ Div(x1, x2) = func(
 
 Pow(x1, x2) = func(
     (x1, x2) -> x1 ^ x2,
-    (x1, x2) -> x2 * x1 ^  (x2 - 1),
+    (x1, x2) -> x2 * (x1 ^ (x2 - 1)),
     "Pow"
 )(x1, x2)
+
+
 
 Base.:+(x1::Variable, x2::Variable) = Add(x1, x2)
 Base.:+(x1::Variable, x2) = Add(x1, variable(x2))
