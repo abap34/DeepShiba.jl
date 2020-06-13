@@ -12,7 +12,7 @@ function get_output_str(var::Variable)
     output *= "data: $(var.data)\n"
 
     if (var.grad !== nothing) 
-        output *= "grad: $(var.grad)\n"
+        output *= "grad: $(var.grad.data)\n"
     end
 
     if (var.creator !== nothing)
@@ -80,7 +80,11 @@ function _dot_var(var::Variable)
     if var.data !== nothing
         var_size = size(var.data)
         if isempty(var_size)
-            name *= "$(var.data)"
+            try var.grad.data !== nothing
+                name *= "$(var.grad.data)"
+            catch
+                name *= "nothing"
+            end
         else    
             name *= "$(var_size) $(eltype(var.data))"
         end

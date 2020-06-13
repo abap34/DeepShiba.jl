@@ -22,9 +22,9 @@ end
 
 
 
-variable(data, name=nothing) = Variable(data, nothing, nothing, 0, name)
+variable(data, name = nothing) = Variable(data, nothing, nothing, 0, name)
 
-func(forward, backward, name=nothing) = Func(forward, backward, nothing, nothing, nothing, name)
+func(forward, backward, name = nothing) = Func(forward, backward, nothing, nothing, nothing, name)
 
 
 function ones_like(x)
@@ -45,12 +45,17 @@ get_data(var::Variable) = var.data
 
 get_generation(var::Variable) = var.generation
 
-function cleargrad(var::Variable)
+function cleargrad!(var::Variable)
     var.grad = nothing
 end
 
+function set_name(var::Variable, name)
+    var.name = name
+end
+
+
 function (f::Func)(vars::Variable...)
-    f.inputs = vars
+    f.inputs = [vars...]
     xs = [x.data for x in vars]
     ys = f.forward(xs...)
     ys = as_tuple(ys)
@@ -58,14 +63,16 @@ function (f::Func)(vars::Variable...)
     outputs = [Variable(y, f, nothing, f.generation - 1, nothing) for y in ys]  
     #= Why is the generation decimating?
         When using the Priority queue, the values are taken in order of decreasing priority.
-        The larger the number of generations, the more we want to process it first, so the value is decremented.=#
+        The larger the number of generations, the more we want to process it first, so the value is decremented. =#
     f.outputs = outputs
     length(outputs)  == 1 ? outputs[1] : outputs
 end
 
 
+
+
 function backward!(var::Variable)
-    (isnothing(var.grad)) && (var.grad = ones_like(var.data))
+    (isnothing(var.grad)) && (var.grad = variable(ones_like(var.data)))
     funcs = PriorityQueue{Func,Int}()
     seen_set = Set{Func}()
     enqueue!(funcs, var.creator, 1)
@@ -73,9 +80,7 @@ function backward!(var::Variable)
     while !(isempty(funcs))
         f = dequeue!(funcs)
         gys = [output.grad for output in f.outputs]
-        inputs = get_data.(f.inputs)
-        gxs =  f.backward(inputs...) .* gys
-        gxs = tuple(gxs...)
+        gxs = f.backward(f.inputs...) .* gys
         for (x, gx) in zip(f.inputs, gxs)
             if x.grad === nothing
                 x.grad = gx
@@ -91,39 +96,41 @@ function backward!(var::Variable)
 end
 
 
+
+
 Add(x1, x2) = func(
-    (x1, x2) -> x1 + x2,
-    (x1, x2) -> (1, 1),
+    (x1, x2)->(x1 + x2),
+    (x1, x2)->(1, 1),
     "Add"
 )(x1, x2)
 
 Sub(x1, x2) = func(
-    (x1, x2) -> x1 - x2,
-    (x1, x2) -> (1, -1),
+    (x1, x2)->(x1 - x2),
+    (x1, x2)->(1, -1),
     "Sub"
 )(x1, x2)
 
 Neg(x) = func(
-    x -> -x,
-    x -> -x,
+    (x)->(-x),
+    (x)->(-x,),
     "Neg"
 )(x)
 
 Mul(x1, x2) = func(
-    (x1, x2) -> x1 * x2,
-    (x1, x2) -> (x2, x1),
+    (x1, x2)->(x1 * x2),
+    (x1, x2)->(x2, x1),
     "Mul"
 )(x1, x2)
 
 Div(x1, x2) = func(
-    (x1, x2) -> x1 / x2,
-    (x1, x2) -> (1 / x1, -x1 / (x2 ^ 2)),
+    (x1, x2)->(x1 / x2),
+    (x1, x2)->(1 / x1, -x1 / (x2^2)),
     "Div"
 )(x1, x2)
 
 Pow(x1, x2) = func(
-    (x1, x2) -> x1 ^ x2,
-    (x1, x2) -> x2 * (x1 ^ (x2 - 1)),
+    (x1, x2)->(x1^x2),
+    (x1, x2)->(x2 * (x1^(x2 - 1)),),
     "Pow"
 )(x1, x2)
 
@@ -151,3 +158,4 @@ Base.:-(x::Variable) = Neg(x)
 Base.:^(x1::Variable, x2::Variable) = Pow(x1, x2)
 Base.:^(x1::Variable, x2) = Pow(x1, variable(x2))
 Base.:^(x1, x2::Variable) = Pow(variable(x1), x2)
+
