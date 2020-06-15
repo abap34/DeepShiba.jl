@@ -1,6 +1,24 @@
 include("core.jl")
 
 
+function numerical_diff(f::Function, x::Real; e=10e-4)
+    return (f(x + e) - f(x - e)) / 2e
+end
+
+function numerical_diff(f::Function, x::AbstractArray; e=1e-4)
+    grad = zeros(length(x)) 
+    for idx in 1:length(x)
+        tmp_val = x[idx]
+        x[idx] = tmp_val + e
+        fxh1 = f(x)
+        x[idx] = tmp_val - e
+        fxh2 = f(x)
+        grad[idx] = (fxh1 - fxh2) / 2e
+        x[idx] = tmp_val
+    end
+    return grad
+end
+
 function get_output_str(var::Variable)
     output = "{DeepShiba.ShibaObject.Variable}\n"
 
@@ -65,13 +83,6 @@ function Base.display(f::Func)
     print("output: ")
     print(f.outputs)
     print("]")
-end
-
-
-
-
-function numerical_diff(f::Function, x::Real, e = 10e-4)
-    return (f(x + e) - f(x - e)) / 2e
 end
 
 
