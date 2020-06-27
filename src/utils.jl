@@ -20,12 +20,9 @@ function numerical_diff(f::Function, x::AbstractArray; e=1e-4)
 end
 
 function get_output_str(var::Variable)
-    output = "{DeepShiba.ShibaObject.Variable}\n"
-
+    output = "{DeepShiba.ShibaObject.Variable}:\n"
     if var.name !== nothing
         output *= "$(var.name):\n"
-    else
-        output *= "\n"
     end
     output *= "data: $(var.data)\n"
 
@@ -34,9 +31,7 @@ function get_output_str(var::Variable)
     end
 
     if (var.creator !== nothing)
-        if (var.creator.name !== nothing) 
-            output *= "creator: $(var.creator.name)\n"
-        end
+        output *= "creator: $(typeof(var.creator))\n"
     else
         output *= "User-Defined\n"
     end
@@ -85,6 +80,13 @@ function Base.display(f::Func)
     print("]")
 end
 
+function get_value_type(nest_var)
+    if eltype(nest_var) <: Real
+        return eltype(nest_var)
+    else
+        get_value_type(eltype(nest_var))
+    end
+end
 
 function _dot_var(var::Variable)
     name = var.name === nothing ? "" : var.name * ":"
@@ -97,7 +99,7 @@ function _dot_var(var::Variable)
                 name *= "nothing"
             end
         else    
-            name *= "$(var_size) $(eltype(var.data))"
+            name *= "shape: $(var_size) \n type: $(get_value_type(var.data))"
         end
     end
     dot_var = "$(objectid(var)) [label=\"$name\", color=orange, style=filled]\n"
@@ -105,7 +107,7 @@ end
 
 
 function _dot_func(f::Func)
-    txt = "$(objectid(f)) [label=\"$(f.name)\", color=lightblue, style=filled, shape=box]\n"
+    txt = "$(objectid(f)) [label=\"$(typeof(f))\", color=lightblue, style=filled, shape=box]\n"
     for x in f.inputs
         txt *= "$(objectid(x)) -> $(objectid(f))\n"
     end
@@ -139,7 +141,7 @@ end
 
 
 
-function plot(var::Variable, to_file = "graph.png")
+function plot(var::Variable; to_file = "graph.png")
     dot_graph = get_dot_graph(var)
     tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
     (!(ispath(tmp_dir))) && (mkdir(tmp_dir))
