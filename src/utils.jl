@@ -1,6 +1,3 @@
-include("core.jl")
-
-
 function numerical_diff(f::Function, x::Real; e=10e-4)
     return (f(x + e) - f(x - e)) / 2e
 end
@@ -94,7 +91,7 @@ function _dot_var(var::Variable)
         var_size = size(var.data)
         if isempty(var_size)
             try var.grad.data !== nothing
-                name *= "$(var.grad.data)"
+                name *= "$(var.data)"
             catch
                 name *= "nothing"
             end
