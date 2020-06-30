@@ -55,8 +55,15 @@ mutable struct Pow <: Func
     inputs
     outputs
     generation
-    c
 end
+
+mutable struct Log <: Func
+    inputs
+    outputs
+    generation
+end
+
+
 
 _Add(x1, x2) =  Add(nothing, nothing, nothing)(x1, x2)
 
@@ -68,8 +75,9 @@ _Mul(x1, x2) = Mul(nothing, nothing, nothing)(x1, x2)
 
 _Div(x1, x2) = Div(nothing, nothing, nothing)(x1, x2)
 
-_Pow(x, c) = Pow(nothing, nothing, nothing, c)(x, c)
+_Pow(x, c) = Pow(nothing, nothing, nothing)(x, c)
 
+_Log(x::Variable) = Log(nothing, nothing, nothing)(x)
 
 forward(f::Add, x1, x2) = x1 + x2
 forward(f::Sub, x1, x2) = x1 - x2
@@ -77,6 +85,8 @@ forward(f::Neg, x) = -x
 forward(f::Mul, x1, x2) = x1 * x2
 forward(f::Div, x1, x2) = x1 / x2
 forward(f::Pow, x, c) = x^c
+forward(f::Log, x) = log(x)
+
 
 function get_gys(outputs)
     return [output.grad for output in outputs]
@@ -94,26 +104,33 @@ end
 
 function backward(f::Neg) 
     gys = get_gys(f.outputs)
-    return (- f.inputs .* gys,)
+    return -gys
 end
 
 function backward(f::Mul) 
     gys = get_gys(f.outputs)
-    x1, x2 = f.inputs
+    x1,x2 = f.inputs
     return (x2, x1) .* gys
 end
 
 function backward(f::Div) 
     gys = get_gys(f.outputs)
     x1, x2 = f.inputs
-    return (1 / x1, -x1 / (x2^2),) .* gys
+    return (1 / x2, - x1 / (x2^2)) .* gys
 end
 
 function backward(f::Pow)
     gys = get_gys(f.outputs)
-    x1, x2 = f.inputs
-    return (x2 * (x1^(x2 - 1)),) .* gys
+    x, c = f.inputs
+    return (c * (x^ (c - 1)), x ^ c * log(x)) .* gys
 end
+
+function backward(f::Log)
+    gys = get_gys(f.outputs)
+    x = f.inputs[1]
+    return (1 / x) .* gys
+end
+
 
 function ones_like(x)
     shape = size(x)
@@ -203,4 +220,5 @@ Base.:^(x1::Variable, x2::Variable) = _Pow(x1, x2)
 Base.:^(x1::Variable, x2) = _Pow(x1, variable(x2))
 Base.:^(x1, x2::Variable) = _Pow(variable(x1), x2)
 
+Base.log(x::Variable) = _Log(x)
 Base.size(x::Variable) = size(x.data)
