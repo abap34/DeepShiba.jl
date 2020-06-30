@@ -1,4 +1,6 @@
 module DeepShiba
+    include("core.jl")
     include("utils.jl")
-    export Variable, Func, variable, func, backward!, numerical_diff, cleargrad!, print, display, +, -, *, /, plot
+    include("functions.jl")
+    export Variable, Func, variable, backward!, numerical_diff, cleargrad!, print, display, +, -, *, /, reshape, plot
 end 

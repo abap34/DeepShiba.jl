@@ -1,13 +1,25 @@
-include("core.jl")
+function numerical_diff(f::Function, x::Real; e=10e-4)
+    return (f(x + e) - f(x - e)) / 2e
+end
 
+function numerical_diff(f::Function, xs::AbstractArray; e=1e-4)
+    grads = zeros(length(xs)) 
+    for idx in 1:length(xs)
+        tmp_val = xs[idx]
+        xs[idx] = tmp_val + e
+        fxh1 = f(xs...)
+        xs[idx] = tmp_val - e
+        fxh2 = f(xs...)
+        grads[idx] = (fxh1 - fxh2) / 2e
+        xs[idx] = tmp_val
+    end
+    return grads
+end
 
 function get_output_str(var::Variable)
-    output = "{DeepShiba.ShibaObject.Variable}\n"
-
+    output = "{DeepShiba.ShibaObject.Variable}:\n"
     if var.name !== nothing
         output *= "$(var.name):\n"
-    else
-        output *= "\n"
     end
     output *= "data: $(var.data)\n"
 
@@ -16,9 +28,7 @@ function get_output_str(var::Variable)
     end
 
     if (var.creator !== nothing)
-        if (var.creator.name !== nothing) 
-            output *= "creator: $(var.creator.name)\n"
-        end
+        output *= "creator: $(typeof(var.creator))\n"
     else
         output *= "User-Defined\n"
     end
@@ -67,13 +77,13 @@ function Base.display(f::Func)
     print("]")
 end
 
-
-
-
-function numerical_diff(f::Function, x::Real, e = 10e-4)
-    return (f(x + e) - f(x - e)) / 2e
+function get_value_type(nest_var)
+    if eltype(nest_var) <: Real
+        return eltype(nest_var)
+    else
+        get_value_type(eltype(nest_var))
+    end
 end
-
 
 function _dot_var(var::Variable)
     name = var.name === nothing ? "" : var.name * ":"
@@ -81,12 +91,12 @@ function _dot_var(var::Variable)
         var_size = size(var.data)
         if isempty(var_size)
             try var.grad.data !== nothing
-                name *= "$(var.grad.data)"
+                name *= "$(var.data)"
             catch
                 name *= "nothing"
             end
         else    
-            name *= "$(var_size) $(eltype(var.data))"
+            name *= "shape: $(var_size) \n type: $(get_value_type(var.data))"
         end
     end
     dot_var = "$(objectid(var)) [label=\"$name\", color=orange, style=filled]\n"
@@ -94,7 +104,7 @@ end
 
 
 function _dot_func(f::Func)
-    txt = "$(objectid(f)) [label=\"$(f.name)\", color=lightblue, style=filled, shape=box]\n"
+    txt = "$(objectid(f)) [label=\"$(typeof(f))\", color=lightblue, style=filled, shape=box]\n"
     for x in f.inputs
         txt *= "$(objectid(x)) -> $(objectid(f))\n"
     end
@@ -128,7 +138,7 @@ end
 
 
 
-function plot(var::Variable, to_file = "graph.png")
+function plot(var::Variable; to_file = "graph.png")
     dot_graph = get_dot_graph(var)
     tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
     (!(ispath(tmp_dir))) && (mkdir(tmp_dir))

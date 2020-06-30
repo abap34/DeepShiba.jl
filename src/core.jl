@@ -1,6 +1,7 @@
 import Base
 using DataStructures
 
+
 abstract type ShibaObject end
 
 mutable struct Variable <: ShibaObject 
@@ -11,20 +12,124 @@ mutable struct Variable <: ShibaObject
     name
 end
 
-mutable struct Func <: ShibaObject
-    forward
-    backward
+
+variable(data, name=nothing) = Variable(data, nothing, nothing, 0, name)
+
+abstract type Func <: ShibaObject end 
+
+mutable struct Add <: Func
+    inputs
+    outputs 
+    generation 
+end
+
+mutable struct Sub <: Func
     inputs
     outputs
     generation
-    name
+end
+
+
+mutable struct Neg <: Func
+    inputs
+    outputs
+    generation
+end
+
+
+mutable struct Mul <: Func
+    inputs
+    outputs
+    generation
+end
+
+
+mutable struct Div <: Func
+    inputs
+    outputs
+    generation
+end
+
+
+mutable struct Pow <: Func
+    inputs
+    outputs
+    generation
+end
+
+mutable struct Log <: Func
+    inputs
+    outputs
+    generation
 end
 
 
 
-variable(data, name = nothing) = Variable(data, nothing, nothing, 0, name)
+_Add(x1, x2) =  Add(nothing, nothing, nothing)(x1, x2)
 
-func(forward, backward, name = nothing) = Func(forward, backward, nothing, nothing, nothing, name)
+_Sub(x1, x2) = Sub(nothing, nothing, nothing)(x1, x2)
+
+_Neg(x) = Neg(nothing, nothing, nothing)(x)
+
+_Mul(x1, x2) = Mul(nothing, nothing, nothing)(x1, x2)
+
+_Div(x1, x2) = Div(nothing, nothing, nothing)(x1, x2)
+
+_Pow(x, c) = Pow(nothing, nothing, nothing)(x, c)
+
+_Log(x::Variable) = Log(nothing, nothing, nothing)(x)
+
+forward(f::Add, x1, x2) = x1 + x2
+forward(f::Sub, x1, x2) = x1 - x2
+forward(f::Neg, x) = -x
+forward(f::Mul, x1, x2) = x1 * x2
+forward(f::Div, x1, x2) = x1 / x2
+forward(f::Pow, x, c) = x^c
+forward(f::Log, x) = log(x)
+
+
+function get_gys(outputs)
+    return [output.grad for output in outputs]
+end
+
+function backward(f::Add) 
+    gys = get_gys(f.outputs)
+    return gys .* [1, 1]
+end
+
+function backward(f::Sub) 
+    gys = get_gys(f.outputs)
+    return gys .* [1, -1]
+end
+
+function backward(f::Neg) 
+    gys = get_gys(f.outputs)
+    return -gys
+end
+
+function backward(f::Mul) 
+    gys = get_gys(f.outputs)
+    x1,x2 = f.inputs
+    return (x2, x1) .* gys
+end
+
+function backward(f::Div) 
+    gys = get_gys(f.outputs)
+    x1, x2 = f.inputs
+    return (1 / x2, - x1 / (x2^2)) .* gys
+end
+
+function backward(f::Pow)
+    gys = get_gys(f.outputs)
+    x, c = f.inputs
+    return (c * (x^ (c - 1)), x ^ c * log(x)) .* gys
+end
+
+function backward(f::Log)
+    gys = get_gys(f.outputs)
+    x = f.inputs[1]
+    return (1 / x) .* gys
+end
 
 
 function ones_like(x)
@@ -57,7 +162,7 @@ end
 function (f::Func)(vars::Variable...)
     f.inputs = [vars...]
     xs = [x.data for x in vars]
-    ys = f.forward(xs...)
+    ys = forward(f, xs...)
     ys = as_tuple(ys)
     f.generation = minimum([x.generation for x in f.inputs])
     outputs = [Variable(y, f, nothing, f.generation - 1, nothing) for y in ys]  
@@ -65,10 +170,8 @@ function (f::Func)(vars::Variable...)
         When using the Priority queue, the values are taken in order of decreasing priority.
         The larger the number of generations, the more we want to process it first, so the value is decremented. =#
     f.outputs = outputs
-    length(outputs)  == 1 ? outputs[1] : outputs
+    return length(outputs)  == 1 ? outputs[1] : outputs
 end
-
-
 
 
 function backward!(var::Variable)
@@ -79,8 +182,7 @@ function backward!(var::Variable)
     push!(seen_set, var.creator)
     while !(isempty(funcs))
         f = dequeue!(funcs)
-        gys = [output.grad for output in f.outputs]
-        gxs = f.backward(f.inputs...) .* gys
+        gxs = backward(f)
         for (x, gx) in zip(f.inputs, gxs)
             if x.grad === nothing
                 x.grad = gx
@@ -95,67 +197,28 @@ function backward!(var::Variable)
     end
 end
 
+Base.:+(x1::Variable, x2::Variable) = _Add(x1, x2)
+Base.:+(x1::Variable, x2) = _Add(x1, variable(x2))
+Base.:+(x1, x2::Variable) = _Add(variable(x1), x2)
 
 
+Base.:-(x1::Variable, x2::Variable) = _Sub(x1, x2)
+Base.:-(x1::Variable, x2) = _Sub(x1, variable(x2))
+Base.:-(x1, x2::Variable) = _Sub(variable(x1), x2)
 
-Add(x1, x2) = func(
-    (x1, x2)->(x1 + x2),
-    (x1, x2)->(1, 1),
-    "Add"
-)(x1, x2)
+Base.:*(x1::Variable, x2::Variable) = _Mul(x1, x2)
+Base.:*(x1::Variable, x2) = _Mul(x1, variable(x2))
+Base.:*(x1, x2::Variable) = _Mul(variable(x1), x2)
 
-Sub(x1, x2) = func(
-    (x1, x2)->(x1 - x2),
-    (x1, x2)->(1, -1),
-    "Sub"
-)(x1, x2)
+Base.:/(x1::Variable, x2::Variable) = _Div(x1, x2)
+Base.:/(x1::Variable, x2) = _Div(x1, variable(x2))
+Base.:/(x1, x2::Variable) = _Div(variable(x1), x2)
 
-Neg(x) = func(
-    (x)->(-x),
-    (x)->(-x,),
-    "Neg"
-)(x)
+Base.:-(x::Variable) = _Neg(x)
 
-Mul(x1, x2) = func(
-    (x1, x2)->(x1 * x2),
-    (x1, x2)->(x2, x1),
-    "Mul"
-)(x1, x2)
+Base.:^(x1::Variable, x2::Variable) = _Pow(x1, x2)
+Base.:^(x1::Variable, x2) = _Pow(x1, variable(x2))
+Base.:^(x1, x2::Variable) = _Pow(variable(x1), x2)
 
-Div(x1, x2) = func(
-    (x1, x2)->(x1 / x2),
-    (x1, x2)->(1 / x1, -x1 / (x2^2)),
-    "Div"
-)(x1, x2)
-
-Pow(x1, x2) = func(
-    (x1, x2)->(x1^x2),
-    (x1, x2)->(x2 * (x1^(x2 - 1)),),
-    "Pow"
-)(x1, x2)
-
-
-
-Base.:+(x1::Variable, x2::Variable) = Add(x1, x2)
-Base.:+(x1::Variable, x2) = Add(x1, variable(x2))
-Base.:+(x1, x2::Variable) = Add(variable(x1), x2)
-
-
-Base.:-(x1::Variable, x2::Variable) = Sub(x1, x2)
-Base.:-(x1::Variable, x2) = Sub(x1, variable(x2))
-Base.:-(x1, x2::Variable) = Sub(variable(x1), x2)
-
-Base.:*(x1::Variable, x2::Variable) = Mul(x1, x2)
-Base.:*(x1::Variable, x2) = Mul(x1, variable(x2))
-Base.:*(x1, x2::Variable) = Mul(variable(x1), x2)
-
-Base.:/(x1::Variable, x2::Variable) = Div(x1, x2)
-Base.:/(x1::Variable, x2) = Div(x1, variable(x2))
-Base.:/(x1, x2::Variable) = Div(variable(x1), x2)
-
-Base.:-(x::Variable) = Neg(x)
-
-Base.:^(x1::Variable, x2::Variable) = Pow(x1, x2)
-Base.:^(x1::Variable, x2) = Pow(x1, variable(x2))
-Base.:^(x1, x2::Variable) = Pow(variable(x1), x2)
-
+Base.log(x::Variable) = _Log(x)
+Base.size(x::Variable) = size(x.data)
