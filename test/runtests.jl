@@ -63,4 +63,3 @@ end
         @test isAbout(numerical_grad, shiba_grad.data, e=10e-4)
     end
 end
-ß
