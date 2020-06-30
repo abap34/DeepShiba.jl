@@ -2,18 +2,18 @@ function numerical_diff(f::Function, x::Real; e=10e-4)
     return (f(x + e) - f(x - e)) / 2e
 end
 
-function numerical_diff(f::Function, x::AbstractArray; e=1e-4)
-    grad = zeros(length(x)) 
-    for idx in 1:length(x)
-        tmp_val = x[idx]
-        x[idx] = tmp_val + e
-        fxh1 = f(x)
-        x[idx] = tmp_val - e
-        fxh2 = f(x)
-        grad[idx] = (fxh1 - fxh2) / 2e
-        x[idx] = tmp_val
+function numerical_diff(f::Function, xs::AbstractArray; e=1e-4)
+    grads = zeros(length(xs)) 
+    for idx in 1:length(xs)
+        tmp_val = xs[idx]
+        xs[idx] = tmp_val + e
+        fxh1 = f(xs...)
+        xs[idx] = tmp_val - e
+        fxh2 = f(xs...)
+        grads[idx] = (fxh1 - fxh2) / 2e
+        xs[idx] = tmp_val
     end
-    return grad
+    return grads
 end
 
 function get_output_str(var::Variable)
