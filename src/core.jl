@@ -78,38 +78,41 @@ forward(f::Mul, x1, x2) = x1 * x2
 forward(f::Div, x1, x2) = x1 / x2
 forward(f::Pow, x, c) = x^c
 
+function get_gys(outputs)
+    return [output.grad for output in outputs]
+end
 
 function backward(f::Add) 
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     return gys .* [1, 1]
 end
 
 function backward(f::Sub) 
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     return gys .* [1, -1]
 end
 
 function backward(f::Neg) 
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     return (- f.inputs .* gys,)
 end
 
 function backward(f::Mul) 
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     x1, x2 = f.inputs
     return (x2, x1) .* gys
 end
 
 function backward(f::Div) 
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     x1, x2 = f.inputs
     return (1 / x1, -x1 / (x2^2),) .* gys
 end
 
 function backward(f::Pow)
-    gys = [output.grad for output in f.outputs]
+    gys = get_gys(f.outputs)
     x1, x2 = f.inputs
-    return (x2 * (x1^ (x2 - 1)),) .* gys
+    return (x2 * (x1^(x2 - 1)),) .* gys
 end
 
 function ones_like(x)
@@ -150,7 +153,7 @@ function (f::Func)(vars::Variable...)
         When using the Priority queue, the values are taken in order of decreasing priority.
         The larger the number of generations, the more we want to process it first, so the value is decremented. =#
     f.outputs = outputs
-    length(outputs)  == 1 ? outputs[1] : outputs
+    return length(outputs)  == 1 ? outputs[1] : outputs
 end
 
 
@@ -200,5 +203,4 @@ Base.:^(x1::Variable, x2::Variable) = _Pow(x1, x2)
 Base.:^(x1::Variable, x2) = _Pow(x1, variable(x2))
 Base.:^(x1, x2::Variable) = _Pow(variable(x1), x2)
 
-
-
+Base.size(x::Variable) = size(x.data)
