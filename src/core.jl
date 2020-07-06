@@ -109,20 +109,20 @@ end
 
 function backward(f::Mul) 
     gys = get_gys(f.outputs)
-    x1,x2 = f.inputs
+    x1, x2 = f.inputs
     return (x2, x1) .* gys
 end
 
 function backward(f::Div) 
     gys = get_gys(f.outputs)
     x1, x2 = f.inputs
-    return (1 / x2, - x1 / (x2^2)) .* gys
+    return (1 / x2, -x1 / (x2^2)) .* gys
 end
 
 function backward(f::Pow)
     gys = get_gys(f.outputs)
     x, c = f.inputs
-    return (c * (x^ (c - 1)), x ^ c * log(x)) .* gys
+    return (c * (x^(c - 1)), x^c * log(x)) .* gys
 end
 
 function backward(f::Log)
