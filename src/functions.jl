@@ -5,41 +5,41 @@ import Base
 
 
 mutable struct Log <: Func
-    inputs
-    outputs
-    generation
+    inputs :: NullableVariableValueType
+    outputs :: NullableVariableValueType
+    generation :: Int
 end
 
 mutable struct Sin <: Func
-    inputs
-    outputs
-    generation
+    inputs :: NullableVariableValueType
+    outputs :: NullableVariableValueType
+    generation :: Int
 end
 
 mutable struct Cos <: Func
-    inputs
-    outputs
-    generation
+    inputs :: NullableVariableValueType
+    outputs :: NullableVariableValueType
+    generation :: Int
 end
 
 mutable struct Tan <: Func
-    inputs
-    outputs
-    generation
+    inputs :: NullableVariableValueType
+    outputs :: NullableVariableValueType
+    generation :: Int
 end
 
 mutable struct Tanh <: Func
-    inputs
-    outputs
-    generation
+    inputs :: NullableVariableValueType
+    outputs :: NullableVariableValueType
+    generation :: Int
 end
 
 
-_Log(x::Variable) = Log(nothing, nothing, nothing)(x)
-_Sin(x) = Sin(nothing, nothing, nothing)(x)
-_Cos(x) = Cos(nothing, nothing, nothing)(x)
-_Tan(x) = Tan(nothing, nothing, nothing)(x)
-_Tanh(x) = Tanh(nothing, nothing, nothing)(x)
+_Log(x::Variable) = Log(nothing, nothing, 0)(x)
+_Sin(x) = Sin(nothing, nothing, 0)(x)
+_Cos(x) = Cos(nothing, nothing, 0)(x)
+_Tan(x) = Tan(nothing, nothing, 0)(x)
+_Tanh(x) = Tanh(nothing, nothing, 0)(x)
 
 forward(f::Log, x) = log(x)
 forward(f::Sin, x) = sin(x)
