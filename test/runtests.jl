@@ -3,7 +3,7 @@ using DeepShiba
 
 
 
-function isAbout(x, y; e=10e-5)
+function isAbout(x, y; e=10e-4)
     return y - e <= x <= y + e
 end
 
@@ -11,18 +11,18 @@ end
 
 
 @testset "NumericalDiffTest" begin
-        f(x) = 2x^3 + x^2 + 3x + 2
-        f′(x) = 6x^2 + 2x + 3
-        for i in 0:0.1:1
-            num_diff = numerical_diff(f, i)
-            @test isAbout(num_diff, f′(i)) 
-        end
+    f(x) = 2x^3 + x^2 + 3x + 2
+    f′(x) = 6x^2 + 2x + 3
+    for i in 0:0.1:1
+        num_diff = numerical_diff(f, i)
+        @test isAbout(num_diff, f′(i)) 
     end
+end
 
 
 @testset "OperatorTest" begin
-    operators = [+, -, *, /, ^]
-    basic_func(a, b, c) = (a^b - 4b^2 + 10) / c
+    operators = [+, -, *, /]
+    basic_func(a, b, c) = (a^2 - 4b^2 + 10) / c
     # This simple function contains all the basic operators.
     @testset "OperatorForwardTest" begin
         a, b = rand(2)
@@ -46,8 +46,8 @@ end
             shiba_a_grad = shiba_a.grad.data
             shiba_b_grad = shiba_b.grad.data
             numerical_grads = numerical_diff(op, [a, b])
-            @test isAbout(shiba_a_grad, numerical_grads[1], e=10e-4)
-            @test isAbout(shiba_b_grad, numerical_grads[2], e=10e-4)
+            @test isAbout(shiba_a_grad, numerical_grads[1])
+            @test isAbout(shiba_b_grad, numerical_grads[2])
         end
     end
 
@@ -55,12 +55,37 @@ end
     @testset "BasicFunBackwardTest" begin
         a, b, c = rand(3)
         shiba_a, shiba_b, shiba_c = variable.((a, b, c))
-        grads = numerical_diff(basic_func, [a, b, c], e=10e-4)
+        grads = numerical_diff(basic_func, [a, b, c])
         shiba_y = basic_func(shiba_a, shiba_b, shiba_c)
         backward!(shiba_y)
         for (shiba_grad, numerical_grad) in zip([shiba_a, shiba_b, shiba_c], [a, b, c])
-            @test isAbout(numerical_grad, shiba_grad.data, e=10e-4)
+            @test isAbout(numerical_grad, shiba_grad.data)
         end
     end
 
+end
+
+
+@testset "MathFuncTest" begin
+    math_funcs = [sin, cos, tan, tanh]
+    @testset "OneOrgMathFuncForwardTest" begin
+        x = rand()
+        shiba_x = variable(x)
+        for func in math_funcs
+            y = func(x)
+            shiba_y = func(shiba_x)
+            @test isAbout(y, shiba_y.data)
+        end
+    end
+    @testset "OneOrgMathFuncBackwardTest" begin
+        x = rand()
+        shiba_x = variable(x)
+        for func in math_funcs
+            cleargrad!(shiba_x)
+            shiba_y = func(shiba_x)
+            backward!(shiba_y)
+            numerical_grad = numerical_diff(func, x)
+            @test isAbout(shiba_x.grad.data, numerical_grad)
+        end
+    end
 end
