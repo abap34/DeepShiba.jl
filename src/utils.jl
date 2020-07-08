@@ -18,8 +18,8 @@ end
 
 function get_output_str(var::Variable)
     output = "{DeepShiba.ShibaObject.Variable}:\n"
-    if var.name !== nothing
-        output *= "$(var.name):\n"
+    if var.name !== ""
+        output *= "$(var.name) :\n"
     end
     output *= "data: $(var.data)\n"
 
@@ -35,22 +35,13 @@ function get_output_str(var::Variable)
     return output
 end
 
-function Base.print(var::Variable)
-    println(get_output_str(var))
-end
-
-function Base.println(var::Variable)
-    println(get_output_str(var))
-end
-
-function Base.display(var::Variable)
-    println(get_output_str(var))
+function Base.show(io::IO, var::Variable)
+    print(get_output_str(var))
 end
 
 
 
-
-function Base.print(f::Func)
+function Base.show(io::IO, f::Func)
     println("Func[")
     print("input: ")
     print(f.inputs)
@@ -59,23 +50,7 @@ function Base.print(f::Func)
     print("]")
 end
 
-function Base.println(f::Func)
-    println("Func[")
-    print("input: ")
-    print(f.inputs)
-    print("output: ")
-    print(f.outputs)
-    print("]")
-end
 
-function Base.display(f::Func)
-    println("Func[")
-    print("input: ")
-    print(f.inputs)
-    print("output: ")
-    print(f.outputs)
-    print("]")
-end
 
 function get_value_type(nest_var)
     if eltype(nest_var) <: Real
