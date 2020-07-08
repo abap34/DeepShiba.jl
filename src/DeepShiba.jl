@@ -1,6 +1,7 @@
 module DeepShiba
-    include("core.jl")
+    include("core_structures.jl")
+    include("core_functions.jl")
     include("utils.jl")
     include("functions.jl")
-    export Variable, Func, variable, backward!, numerical_diff, cleargrad!, print, display, +, -, *, /, reshape, sin, cos, plot
+    export Variable, Func, variable, backward!, numerical_diff, cleargrad!, show, +, -, *, /, reshape, sin, cos, tanh, plot
 end 
