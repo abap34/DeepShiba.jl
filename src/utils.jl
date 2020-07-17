@@ -35,8 +35,14 @@ function get_output_str(var::Variable)
     return output
 end
 
-function Base.show(io::IO, var::Variable)
+
+function Base.show(io::IO, ::MIME"text/plain", var::Variable) 
     print(get_output_str(var))
+end
+
+
+function Base.show(io::IO, var::Variable)
+    print(var.data)
 end
 
 
@@ -61,11 +67,11 @@ function get_value_type(nest_var)
 end
 
 function _dot_var(var::Variable)
-    name = var.name === nothing ? "" : var.name * ":"
+    name = var.name == "" ? "" : var.name * ":"
     if var.data !== nothing
         var_size = size(var.data)
         if isempty(var_size)
-            try var.grad.data !== nothing
+            try var.data !== nothing
                 name *= "$(var.data)"
             catch
                 name *= "nothing"
@@ -79,7 +85,11 @@ end
 
 
 function _dot_func(f::Func)
-    txt = "$(objectid(f)) [label=\"$(typeof(f))\", color=lightblue, style=filled, shape=box]\n"
+    f_type = typeof(f)
+    if f_type == DeepShiba.Pow
+        f_type = "$(f_type)($(f.c))"
+    end
+    txt = "$(objectid(f)) [label=\"$(f_type)\", color=lightblue, style=filled, shape=box]\n"
     for x in f.inputs
         txt *= "$(objectid(x)) -> $(objectid(f))\n"
     end
