@@ -35,11 +35,11 @@ mutable struct Tanh <: Func
 end
 
 
-_Log(x::Variable) = Log(nothing, nothing, 0)(x)
-_Sin(x) = Sin(nothing, nothing, 0)(x)
-_Cos(x) = Cos(nothing, nothing, 0)(x)
-_Tan(x) = Tan(nothing, nothing, 0)(x)
-_Tanh(x) = Tanh(nothing, nothing, 0)(x)
+_Log(x::Variable) = forward!(Log([x, ], nothing, 0))
+_Sin(x) = forward!(Sin([x, ],   nothing, 0))
+_Cos(x) = forward!(Cos([x, ], nothing, 0))
+_Tan(x) = forward!(Tan([x, ], nothing, 0))
+_Tanh(x) = forward!(Tanh([x, ], nothing, 0))
 
 forward(f::Log, x) = log(x)
 forward(f::Sin, x) = sin(x)
@@ -100,8 +100,8 @@ mutable struct Transpose <: Func
     generation
 end
 
-_Reshape(x, shape) = Reshape(nothing, nothing, nothing, shape)(x)
-_Transpose(x) = Transpose(nothing, nothing, nothing)(x)
+_Reshape(x, shape) = forward!(Reshape([x, ], nothing, nothing, shape))
+_Transpose(x) = forward!(Transpose([x, ], nothing, nothing)(x))
 
 
 forward(f::Reshape, x)  = reshape(x, f.shape)

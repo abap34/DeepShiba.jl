@@ -1,11 +1,11 @@
-function (f::Func)(vars::Variable...)
-    xs = Array{Float64}(undef, length(vars))
-    xs[1] = vars[1].data
-    min_generation = vars[1].generation
-    for i in 2:length(vars)
-        xs[i] = vars[i].data
-        if vars[i].generation < min_generation
-            min_generation = vars[i].generation
+function forward!(f::Func)
+    xs = Array{Float64}(undef, length(f.inputs))
+    xs[1] = f.inputs[1].data
+    min_generation = f.inputs[1].generation
+    for i in 2:length(f.inputs)
+        xs[i] = f.inputs[i].data
+        if f.inputs[i].generation < min_generation
+            min_generation = f.inputs[i].generation
         end
     end
     ys = forward(f, xs...)
@@ -45,7 +45,7 @@ function variable(data, creator=nothing, grad=nothing, generation=0; name="")
 end
 
 function get_gys(outputs)
-    return [output for output in outputs]
+    return [output.grad for output in outputs]
 end
 
 

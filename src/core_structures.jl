@@ -64,17 +64,17 @@ end
 
 
 
-_Add(x1, x2) =  Add([x1, x2], nothing, 0)(x1, x2)
+_Add(x1, x2) =  forward!(Add([x1, x2], nothing, 0))
 
-_Sub(x1, x2) = Sub([x1, x2], nothing, 0)(x1, x2)
+_Sub(x1, x2) = forward!(Sub([x1, x2], nothing, 0))
 
-_Neg(x) = Neg([x, ], nothing, 0)(x)
+_Neg(x) = forward!(Neg([x, ], nothing, 0))
 
-_Mul(x1, x2) = Mul([x1, x2], nothing, 0)(x1, x2)
+_Mul(x1, x2) = forward!(Mul([x1, x2], nothing, 0))
 
-_Div(x1, x2) = Div([x1, x2], nothing, 0)(x1, x2)
+_Div(x1, x2) = forward!(Div([x1, x2], nothing, 0))
 
-_Pow(x, c) = Pow([x, ], nothing, 0, c)(x)
+_Pow(x, c) = forward!(Pow([x, ], nothing, 0, c))
 
 
 @inline forward(f::Add, x1, x2)  = x1 + x2
@@ -86,12 +86,12 @@ _Pow(x, c) = Pow([x, ], nothing, 0, c)(x)
 
 function backward(f::Add)::AbstractArray{Variable} 
     gys = get_gys(f.outputs)
-    return  [1, 1] .* gys
+    return [1, 1] .* gys
 end
 
 function backward(f::Sub)::AbstractArray{Variable} 
     gys = get_gys(f.outputs)
-    return  [1, -1] .* gys
+    return [1, -1] .* gys
 end
 
 function backward(f::Neg)::AbstractArray{Variable} 
