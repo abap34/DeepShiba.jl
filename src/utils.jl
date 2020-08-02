@@ -37,12 +37,12 @@ end
 
 
 function Base.show(io::IO, ::MIME"text/plain", var::Variable) 
-    print(get_output_str(var))
+    print(io, get_output_str(var))
 end
 
 
 function Base.show(io::IO, var::Variable)
-    print(var.data)
+    print(io, get_output_str(var))
 end
 
 
@@ -58,11 +58,11 @@ end
 
 
 
-function get_value_type(nest_var)
-    if eltype(nest_var) <: Real
-        return eltype(nest_var)
+function get_value_type(nested_var)
+    if eltype(nested_var) <: Real
+        return eltype(nested_var)
     else
-        get_value_type(eltype(nest_var))
+        get_value_type(eltype(nested_var))
     end
 end
 
