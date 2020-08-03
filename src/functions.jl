@@ -35,11 +35,11 @@ mutable struct Tanh <: Func
 end
 
 
-_Log(x::Variable) = forward!(Log([x, ], nothing, 0))
-_Sin(x) = forward!(Sin([x, ],   nothing, 0))
-_Cos(x) = forward!(Cos([x, ], nothing, 0))
-_Tan(x) = forward!(Tan([x, ], nothing, 0))
-_Tanh(x) = forward!(Tanh([x, ], nothing, 0))
+_Log(x::Variable) = Log([x, ], nothing, 0)(x)
+_Sin(x) = Sin([x, ],   nothing, 0)(x)
+_Cos(x) = Cos([x, ], nothing, 0)(x)
+_Tan(x) = Tan([x, ], nothing, 0)(x)
+_Tanh(x) = Tanh([x, ], nothing, 0)(x)
 
 forward(f::Log, x) = log(x)
 forward(f::Sin, x) = sin(x)

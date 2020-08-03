@@ -12,12 +12,12 @@ const NullableFuncType = Union{Func,Nothing}
 mutable struct Variable <: ShibaObject 
     data::NullableRealValueType
     creator::NullableFuncType
-    grad::Union{Variable,AbstractArray{Variable},Nothing}
+    grad::Union{Variable, AbstractArray{Variable},Nothing}
     generation::Int
     name::String
 end
 
-const NullableVariableArray = Union{AbstractArray{Variable},Nothing}
+const NullableVariableArray = Union{Variable, AbstractArray{Variable},Nothing}
 
 mutable struct Add <: Func
     inputs::NullableVariableArray
@@ -63,18 +63,17 @@ end
 
 
 
+_Add(x1, x2) =  Add([x1, x2], nothing, 0)(x1, x2)
 
-_Add(x1, x2) =  forward!(Add([x1, x2], nothing, 0))
+_Sub(x1, x2) = Sub([x1, x2], nothing, 0)(x1, x2)
 
-_Sub(x1, x2) = forward!(Sub([x1, x2], nothing, 0))
+_Neg(x) = Neg([x, ], nothing, 0)(x)
 
-_Neg(x) = forward!(Neg([x, ], nothing, 0))
+_Mul(x1, x2) = Mul([x1, x2], nothing, 0)(x1, x2)
 
-_Mul(x1, x2) = forward!(Mul([x1, x2], nothing, 0))
+_Div(x1, x2) = Div([x1, x2], nothing, 0)(x1, x2)
 
-_Div(x1, x2) = forward!(Div([x1, x2], nothing, 0))
-
-_Pow(x, c) = forward!(Pow([x, ], nothing, 0, c))
+_Pow(x, c) = Pow([x, ], nothing, 0, c)(x)
 
 
 @inline forward(f::Add, x1, x2)  = x1 + x2
