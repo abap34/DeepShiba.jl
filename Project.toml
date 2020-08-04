@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+ElectronDisplay = "d872a56f-244b-5cc9-b574-2017b5b909a8"
 
 [compat]
 julia = "1.4"
