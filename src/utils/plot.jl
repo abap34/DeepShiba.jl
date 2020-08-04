@@ -1,3 +1,4 @@
+using ElectronDisplay
 const tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
 const dot_file_path = join([tmp_dir,"tmp_graph.dot"], "/")
 
@@ -88,8 +89,11 @@ function plot(var::Variable; to_file = "")
             end
             display(c)
         else
-            plot_tmp_dir(".png")
-
+            png_file_path = plot_tmp_dir(".png")
+            c = open(png_file_path) do io
+                PNGContainer(read(io))
+            end
+            display(c)
         end
     else
         extension = split(to_file, ".")[2]
