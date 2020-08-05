@@ -93,12 +93,16 @@ function plot(var::Variable; to_file = "", show_value=0, title="")
                 PNGContainer(read(io))
             end
             display(c)
-        else
+        elseif PROGRAM_FILE == ""
             png_file_path = plot_tmp_dir(".png")
             c = open(png_file_path) do io
                 PNGContainer(read(io))
             end
             display(c)
+        else
+            error("Plotting from the script is not supported. 
+If you want to plot, use REPL or Jupyter, or use the argument to_file.
+            ")
         end
     else
         extension = split(to_file, ".")[2]
