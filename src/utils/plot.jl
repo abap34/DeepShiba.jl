@@ -1,3 +1,4 @@
+using ElectronDisplay
 const tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
 const dot_file_path = join([tmp_dir,"tmp_graph.dot"], "/")
 
@@ -9,18 +10,19 @@ function Base.show(io::IO, ::MIME"image/png", c::PNGContainer)
     write(io, c.content)
 end
 
-function _dot_var(var::Variable)
+function _dot_var(var::Variable, show_value)
     name = var.name == "" ? "" : var.name * ":"
+    value = (show_value == 0 ? var.data : var.grad.data)
     if var.data !== nothing
-        var_size = size(var.data)
+        var_size = size(value)
         if isempty(var_size)
             try var.data !== nothing
-                name *= "$(var.data)"
+                name *= "$(value)"
             catch
                 name *= "nothing"
             end
         else    
-            name *= "shape: $(var_size) \n type: $(get_value_type(var.data))"
+            name *= "shape: $(var_size) \n type: $(get_value_type(value))"
         end
     end
     dot_var = "$(objectid(var)) [label=\"$name\", color=orange, style=filled]\n"
@@ -42,17 +44,17 @@ function _dot_func(f::Func)
     return txt
 end
 
-function get_dot_graph(var)
+function get_dot_graph(var, show_value, title)
     txt = ""
     funcs = []
     seen_set = Set{Func}()
     push!(funcs, var.creator)
-    txt = _dot_var(var)
+    txt = _dot_var(var, show_value)
     while !(isempty(funcs))
         f = pop!(funcs)
         txt *= _dot_func(f)
         for x in f.inputs
-            txt *= _dot_var(x)
+            txt *= _dot_var(x, show_value)
             if x.creator !== nothing && (!(x.creator in seen_set))
                 push!(seen_set, x.creator)
                 push!(funcs, x.creator)
@@ -60,6 +62,10 @@ function get_dot_graph(var)
         end
     end
     return "digraph g {
+            graph [
+                labelloc=\"t\";
+                label= \"$(title)\"
+            ];
                 $txt 
             }"
 end
@@ -73,8 +79,8 @@ function plot_tmp_dir(extension)
     return to_file
 end
 
-function plot(var::Variable; to_file = "")
-    dot_graph = get_dot_graph(var)
+function plot(var::Variable; to_file = "", show_value=0, title="")
+    dot_graph = get_dot_graph(var, show_value, title)
     (!(ispath(tmp_dir))) && (mkdir(tmp_dir))
     open(dot_file_path, "w") do io
         write(io, dot_graph)
@@ -87,9 +93,16 @@ function plot(var::Variable; to_file = "")
                 PNGContainer(read(io))
             end
             display(c)
+        elseif PROGRAM_FILE == ""
+            png_file_path = plot_tmp_dir(".png")
+            c = open(png_file_path) do io
+                PNGContainer(read(io))
+            end
+            display(c)
         else
-            plot_tmp_dir(".png")
-
+            error("Plotting from the script is not supported. 
+If you want to plot, use REPL or Jupyter, or use the argument to_file.
+            ")
         end
     else
         extension = split(to_file, ".")[2]
