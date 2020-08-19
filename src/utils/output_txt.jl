@@ -1,8 +1,9 @@
 function get_output_str(var::Variable)
     output = "{DeepShiba.ShibaObject.Variable}:\n"
-    if var.name !== ""
+    if var.name != ""
         output *= "$(var.name) :\n"
     end
+    
     output *= "data: $(var.data)\n"
 
     if (var.grad !== nothing) 

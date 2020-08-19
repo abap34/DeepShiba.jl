@@ -1,5 +1,6 @@
-function (f::Func)(vars::Variable...)
-    xs = Array{Float64}(undef, length(vars))
+function (f::Func)(vars::Variable...) 
+    f.inputs = [vars...]
+    xs = Array{Real}(undef, length(vars))
     xs[1] = vars[1].data
     min_generation = vars[1].generation
     for i in 2:length(vars)
@@ -10,9 +11,15 @@ function (f::Func)(vars::Variable...)
     end
     ys = forward(f, xs...)
     f.generation = min_generation
-    outputs = [Variable(y, f, nothing, f.generation - 1, "") for y in ys]   
-    f.outputs = outputs
-    return length(outputs)  == 1 ? outputs[1] : outputs
+    if length(ys) == 1
+        outputs = [Variable(ys[1], f, nothing, f.generation - 1, ""),]
+        f.outputs = outputs
+        return outputs[1]
+    else
+        outputs = [Variable(y, f, nothing, f.generation - 1, "") for y in ys]   
+        f.outputs = outputs
+        return  outputs
+    end
 end
 
 

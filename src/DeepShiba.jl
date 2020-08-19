@@ -5,5 +5,7 @@ module DeepShiba
     include("utils/plot.jl")
     include("functions/math_functions.jl")
     include("functions/trans_functions.jl")
-    export Variable, Func, variable, backward!, numerical_diff, cleargrad!, show, +, -, *, /, reshape, sin, cos, tanh, plot
+    export Variable, Func, variable, @variable, backward!, numerical_diff, cleargrad!, show, +, -, *, /, reshape, sin, cos, tanh, plot
 end 
+
+

@@ -1,32 +1,12 @@
-mutable struct Log <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Log <: Func end
 
-mutable struct Sin <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Sin <: Func end
 
-mutable struct Cos <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Cos <: Func end
 
-mutable struct Tan <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Tan <: Func end
 
-mutable struct Tanh <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Tanh <: Func end
 
 
 _Log(x::Variable) = Log([x, ], nothing, 0)(x)
