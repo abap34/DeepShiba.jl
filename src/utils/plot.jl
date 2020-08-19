@@ -1,4 +1,6 @@
 using ElectronDisplay
+
+
 const tmp_dir = join([expanduser("~"),".DeepShiba"], "/")
 const dot_file_path = join([tmp_dir,"tmp_graph.dot"], "/")
 
@@ -11,7 +13,7 @@ function Base.show(io::IO, ::MIME"image/png", c::PNGContainer)
 end
 
 function _dot_var(var::Variable, show_value)
-    name = var.name == "" ? "" : var.name * ":"
+    name = (var.name == "") ? "" : var.name * ":"
     value = (show_value == 0 ? var.data : var.grad.data)
     if var.data !== nothing
         var_size = size(value)
@@ -79,7 +81,15 @@ function plot_tmp_dir(extension)
     return to_file
 end
 
-function plot(var::Variable; to_file = "", show_value=0, title="")
+function plot(var::Variable; to_file="", show_value="data", title="")
+    if show_value == "grad"
+        show_value = 1
+    elseif show_value == "data"
+        show_value = 0
+    else
+        error("The argument to show_value is invalid.")
+    end
+
     dot_graph = get_dot_graph(var, show_value, title)
     (!(ispath(tmp_dir))) && (mkdir(tmp_dir))
     open(dot_file_path, "w") do io
@@ -92,7 +102,7 @@ function plot(var::Variable; to_file = "", show_value=0, title="")
             c = open(png_file_path) do io
                 PNGContainer(read(io))
             end
-            display(c)
+            return c
         elseif PROGRAM_FILE == ""
             png_file_path = plot_tmp_dir(".png")
             c = open(png_file_path) do io
@@ -100,9 +110,7 @@ function plot(var::Variable; to_file = "", show_value=0, title="")
             end
             display(c)
         else
-            error("Plotting from the script is not supported. 
-If you want to plot, use REPL or Jupyter, or use the argument to_file.
-            ")
+            return c
         end
     else
         extension = split(to_file, ".")[2]
