@@ -1,32 +1,24 @@
-mutable struct Reshape <: Func
-    inputs
-    outputs
-    generation
-    shape
+@DeepShiba_Func mutable struct Reshape <: Func
+    shape::Tuple{Int}
 end
 
 
+@DeepShiba_Func mutable struct Transpose <: Func end
 
-mutable struct Transpose <: Func
-    inputs
-    outputs
-    generation
-end
-
-_Reshape(x, shape) = forward!(Reshape([x, ], nothing, nothing, shape))
-_Transpose(x) = forward!(Transpose([x, ], nothing, nothing)(x))
+_Reshape(x, shape) = Reshape([x, ], nothing, nothing, shape)(x)
+_Transpose(x) = Transpose([x, ], nothing, nothing)(x)
 
 
 forward(f::Reshape, x)  = reshape(x, f.shape)
 forward(f::Transpose, x) = transpose(x)
 
-function backward(f::Reshape)
+function backward(f::Reshape)::AbstractArray{Variable}
     gys = get_gys(f.outputs)
     x_shape = size(f.inputs[1])  
     return reshape.(gys, Ref(x_shape))
 end
 
-function backward(f::Transpose)
+function backward(f::Transpose)::AbstractArray{Variable}
     gys = get_gys(f.outputs)
     return transpose.(gys)
 end
