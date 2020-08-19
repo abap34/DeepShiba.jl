@@ -6,58 +6,56 @@ abstract type ShibaObject end
 abstract type Func <: ShibaObject end 
 
 
+
 const NullableRealValueType = Union{Real,AbstractArray{<:Real},Nothing}
 const NullableFuncType = Union{Func,Nothing}
 
 mutable struct Variable <: ShibaObject 
     data::NullableRealValueType
     creator::NullableFuncType
-    grad::Union{Variable, AbstractArray{Variable},Nothing}
-    generation::Int
-    name::String
+    grad::Union{Variable,AbstractArray{Variable},Nothing} 
+    generation::Int 
+    name::String 
 end
 
-const NullableVariableArray = Union{Variable, AbstractArray{Variable},Nothing}
+const NullableVariableArray = Union{AbstractArray{Variable},Nothing}
 
-mutable struct Add <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
+macro variable(var)
+    if var isa Symbol
+        name = string(var)
+        esc(:($var = Variable($var, nothing, nothing, 0, $name)))
+    elseif (var isa Expr) && (var.head == :(=))
+        res = eval(var)
+        name = string(var.args[1])
+        esc(:($(var.args[1]) = Variable($res, nothing, nothing, 0, $name)))
+    else
+        error("ignore format.")
+    end
 end
 
-
-mutable struct Sub <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
+macro DeepShiba_Func(ex)
+    pushfirst!(ex.args[3].args, :(generation::Int))
+    pushfirst!(ex.args[3].args, :(outputs::NullableVariableArray))
+    pushfirst!(ex.args[3].args, :(inputs::NullableVariableArray))
+    return esc(ex)
 end
 
-
-mutable struct Neg <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Add <: Func end
 
 
-mutable struct Mul <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Sub <: Func end
 
 
-mutable struct Div <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
-end
+@DeepShiba_Func mutable struct Neg <: Func end
 
 
-mutable struct Pow <: Func
-    inputs::NullableVariableArray
-    outputs::NullableVariableArray
-    generation::Int
+@DeepShiba_Func mutable struct Mul <: Func end
+
+
+@DeepShiba_Func mutable struct Div <: Func end
+
+
+@DeepShiba_Func mutable struct Pow <: Func
     c::NullableRealValueType
 end
 
