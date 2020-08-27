@@ -20,18 +20,6 @@ end
 
 const NullableVariableArray = Union{AbstractArray{Variable},Nothing}
 
-macro variable(var)
-    if var isa Symbol
-        name = string(var)
-        esc(:($var = Variable($var, nothing, nothing, 0, $name)))
-    elseif (var isa Expr) && (var.head == :(=))
-        res = eval(var)
-        name = string(var.args[1])
-        esc(:($(var.args[1]) = Variable($res, nothing, nothing, 0, $name)))
-    else
-        error("ignore format.")
-    end
-end
 
 macro DeepShiba_Func(ex)
     pushfirst!(ex.args[3].args, :(generation::Int))
