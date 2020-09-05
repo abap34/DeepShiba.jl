@@ -97,21 +97,11 @@ function plot(var::Variable; to_file="", show_value="data", title="")
     end
     
     if to_file == ""
-        if split(PROGRAM_FILE, "/")[end] == "kernel.jl"
-            png_file_path = plot_tmp_dir(".png")
-            c = open(png_file_path) do io
-                PNGContainer(read(io))
-            end
-            return c
-        elseif PROGRAM_FILE == ""
-            png_file_path = plot_tmp_dir(".png")
-            c = open(png_file_path) do io
-                PNGContainer(read(io))
-            end
-            display(c)
-        else
-            return c
+        png_file_path = plot_tmp_dir(".png")
+        c = open(png_file_path) do io
+            PNGContainer(read(io))
         end
+        return c
     else
         extension = split(to_file, ".")[2]
         cmd = `dot $(dot_file_path) -T $(extension) -o $(to_file)`
